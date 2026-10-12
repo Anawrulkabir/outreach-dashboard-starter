@@ -1,0 +1,14 @@
+# docker compose up -d --build
+# Secrets come from .env (see .env.example). Data lives in ./data-live on the host.
+services:
+  outreach:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TZ: Asia/Dhaka
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000" # only nginx on this machine can reach it
+    volumes:
+      - ./data-live:/data

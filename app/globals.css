@@ -93,10 +93,10 @@ textarea {
 }
 .fix summary { cursor: pointer; color: var(--muted); }
 .fix label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
-.fix input { font: inherit; padding: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.fix input { min-width: 0; max-width: 60%; font: inherit; padding: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
 
 .pill { flex: 0 0 auto; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--wait-bg); color: var(--muted); }
-.p-new-reply, .p-follow-up-due { background: var(--hot-bg); color: var(--hot); }
+.p-new-reply, .p-follow-up-due, .p-bounced { background: var(--hot-bg); color: var(--hot); }
 .p-replied { background: var(--ok-bg); color: var(--accent); }
 .p-waiting, .p-followed-up { background: var(--info-bg); color: var(--info); }
 

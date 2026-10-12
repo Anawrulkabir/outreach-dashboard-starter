@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { statusOf, ORDER, REPLY_TYPES, today, iso, nice, parse, daysBetween } from "@/lib/status";
 
+const firstEmail = (c) => c.email.split(",")[0].trim();
 const gmailLink = (c) => (c.threadId ? `https://mail.google.com/mail/u/0/#all/${c.threadId}` : "");
+const gmailSearch = (c) => `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(`to:${firstEmail(c)} OR from:${firstEmail(c)}`)}`;
 
 export default function Dashboard({ initial, gmail }) {
   const [data, setData] = useState(initial);
@@ -48,7 +50,8 @@ export default function Dashboard({ initial, gmail }) {
   // "Do next": things needing action now, then upcoming dates.
   const todo = [];
   rows.filter((r) => r.st.key === "new-reply").forEach((r) => todo.push({ when: "Now", what: `Read and classify ${r.name}'s reply`, hot: true }));
-  rows.filter((r) => r.st.key === "replied" && r.replyType !== "Declined").forEach((r) => todo.push({ when: "Now", what: `${r.name}: ${r.st.next}`, hot: true }));
+  rows.filter((r) => r.st.key === "bounced").forEach((r) => todo.push({ when: "Now", what: `${r.name}: email bounced. Fix the address and resend.`, hot: true }));
+  rows.filter((r) => r.st.key === "replied" && !r.st.done && r.replyType !== "Declined").forEach((r) => todo.push({ when: "Now", what: `${r.name}: ${r.st.next}`, hot: true }));
   const due = rows.filter((r) => r.st.key === "follow-up-due");
   if (due.length) todo.push({ when: "Today", what: `Follow up with ${due.map((r) => r.name).join(", ")}`, hot: true });
   const upcoming = {};
@@ -166,15 +169,22 @@ function Contact({ c, now, save }) {
         <p className="small"><span className="muted">Paper: </span>{c.paper}</p>
         {c.subject && <p className="small"><span className="muted">Subject: </span>{c.subject}</p>}
         <p className="small links">
-          <a href={`mailto:${c.email.split(",")[0]}`}>{c.email.split(",")[0]}</a>
+          <a href={`mailto:${firstEmail(c)}`}>{firstEmail(c)}</a>
           {c.website && <a href={c.website.startsWith("http") ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">Lab site</a>}
-          {gmailLink(c) && <a href={gmailLink(c)} target="_blank" rel="noreferrer">Open in Gmail</a>}
+          {gmailLink(c) ? (
+            <a href={gmailLink(c)} target="_blank" rel="noreferrer">Open in Gmail</a>
+          ) : (
+            c.sentDate && <a href={gmailSearch(c)} target="_blank" rel="noreferrer">Find in Gmail</a>
+          )}
         </p>
 
         <div className="actions">
           {!c.sentDate && <button onClick={() => save(c.id, { sentDate: t })}>Mark sent today</button>}
-          {c.sentDate && !c.replyDate && !c.replyType && !c.followUpSent && (
+          {c.sentDate && !c.replyDate && !c.replyType && !c.followUpSent && !c.bounced && (
             <button onClick={() => save(c.id, { followUpSent: t })}>Follow-up sent today</button>
+          )}
+          {c.bounced && !c.replyType && (
+            <button onClick={() => save(c.id, { bounced: "", threadId: "", sentDate: t, followUpSent: "" })}>Resent today</button>
           )}
           {c.sentDate && !c.replyDate && <button onClick={() => save(c.id, { replyDate: t })}>Got a reply</button>}
           {c.sentDate && (
@@ -183,25 +193,31 @@ function Contact({ c, now, save }) {
               {REPLY_TYPES.map((r) => <option key={r}>{r}</option>)}
             </select>
           )}
+          {c.replyType && !c.handled && <button onClick={() => save(c.id, { handled: t })}>Handled</button>}
         </div>
 
         <textarea
+          key={c.notes}
           defaultValue={c.notes}
           placeholder="Notes (what they said, what you promised, dates)"
           onBlur={(e) => e.target.value !== c.notes && save(c.id, { notes: e.target.value })}
         />
 
-        {(c.sentDate || c.replyDate || c.followUpSent || c.replyType) && (
-          <details className="fix small">
-            <summary>Edit dates</summary>
-            {[["sentDate", "Sent"], ["followUpSent", "Follow-up sent"], ["replyDate", "Reply received"]].map(([k, l]) => (
-              <label key={k}>
-                {l}
-                <input type="date" value={c[k]} onChange={(e) => save(c.id, { [k]: e.target.value })} />
-              </label>
-            ))}
-          </details>
-        )}
+        <details className="fix small">
+          <summary>Edit details</summary>
+          {[["sentDate", "Sent"], ["followUpSent", "Follow-up sent"], ["replyDate", "Reply received"], ["handled", "Reply handled"]].map(([k, l]) => (
+            <label key={k}>
+              {l}
+              <input type="date" value={c[k] || ""} onChange={(e) => save(c.id, { [k]: e.target.value })} />
+            </label>
+          ))}
+          {[["email", "Email"], ["threadId", "Gmail thread ID"]].map(([k, l]) => (
+            <label key={k}>
+              {l}
+              <input key={c[k]} defaultValue={c[k] || ""} onBlur={(e) => e.target.value.trim() !== (c[k] || "") && save(c.id, { [k]: e.target.value.trim() })} />
+            </label>
+          ))}
+        </details>
       </div>
     </details>
   );
