@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { statusOf, ORDER, REPLY_TYPES, today, iso, nice, parse, daysBetween } from "@/lib/status";
+import { statusOf, ORDER, REPLY_TYPES, TIME_ZONE, today, iso, nice, parse, daysBetween } from "@/lib/status";
 
 const firstEmail = (c) => c.email.split(",")[0].trim();
 const gmailLink = (c) => (c.threadId ? `https://mail.google.com/mail/u/0/#all/${c.threadId}` : "");
@@ -83,7 +83,7 @@ export default function Dashboard({ initial, gmail }) {
         )}
       </header>
       {(syncMsg || data.lastSync) && (
-        <p className="sync small">{syncMsg || `Last Gmail check: ${new Date(data.lastSync).toLocaleString("en-GB")}`}</p>
+        <p className="sync small">{syncMsg || `Last Gmail check: ${new Date(data.lastSync).toLocaleString("en-GB", { timeZone: TIME_ZONE, dateStyle: "medium", timeStyle: "short" })}`}</p>
       )}
 
       <section className="stats">
