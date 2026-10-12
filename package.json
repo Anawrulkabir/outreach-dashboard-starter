@@ -5,11 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p ${PORT:-3000}"
+    "start": "next start -p ${PORT:-3000}",
+    "gmail-token": "node scripts/gmail-token.mjs"
   },
   "dependencies": {
     "next": "15.5.27",
     "react": "19.0.8",
     "react-dom": "19.0.8"
+  },
+  "engines": {
+    "node": ">=18.18"
   }
 }
