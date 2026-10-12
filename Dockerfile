@@ -11,10 +11,9 @@ FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 TZ=Asia/Dhaka \
     HOSTNAME=0.0.0.0 PORT=3000 \
-    DATA_FILE=/data/outreach.json SEED_FILE=/app/seed.json
+    DATA_FILE=/data/outreach.json
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
-COPY data/seed.json /app/seed.json
 VOLUME /data
 EXPOSE 3000
 CMD ["node", "server.js"]

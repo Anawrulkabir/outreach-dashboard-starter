@@ -2,8 +2,15 @@
 // Any username works; only the password is checked.
 export function middleware(req) {
   const pass = process.env.DASHBOARD_PASSWORD;
-  if (!pass) return;
+  if (!pass) {
+    // A Vercel URL is public, so never serve the data there without a password.
+    if (process.env.VERCEL) return new Response("Set DASHBOARD_PASSWORD in Vercel, then redeploy.", { status: 503 });
+    return;
+  }
   const auth = req.headers.get("authorization") || "";
+  // Let the daily Vercel cron through; the sync route checks the same secret.
+  const cron = process.env.CRON_SECRET;
+  if (cron && req.nextUrl.pathname === "/api/sync" && auth === `Bearer ${cron}`) return;
   if (auth.startsWith("Basic ")) {
     let decoded = "";
     try {
